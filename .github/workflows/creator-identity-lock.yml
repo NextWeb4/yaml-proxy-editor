@@ -1,0 +1,47 @@
+name: Creator Identity Lock
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  creator-identity-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify fixed creator identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          expected_name="HaoXiang Hwang"
+          expected_website="https://nextweb4.github.io/"
+          expected_email="didadida1688@gmail.com"
+
+          files=(
+            "src/app/creatorInfo.ts"
+            "README.md"
+            "AGENTS.md"
+            "package.json"
+            "src-tauri/Cargo.toml"
+            "src-tauri/tauri.conf.json"
+          )
+
+          for file in "${files[@]}"; do
+            test -f "$file"
+            grep -Fq "$expected_name" "$file"
+          done
+
+          grep -Fq "$expected_website" "src/app/creatorInfo.ts"
+          grep -Fq "$expected_email" "src/app/creatorInfo.ts"
+          grep -Fq "$expected_website" "README.md"
+          grep -Fq "$expected_email" "README.md"
+          grep -Fq "$expected_website" "package.json"
+          grep -Fq "$expected_email" "package.json"
+          grep -Fq "$expected_website" "src-tauri/Cargo.toml"
+          grep -Fq "$expected_email" "src-tauri/Cargo.toml"
+
+          grep -Fq "Codex" "README.md"
+          grep -Fq "Claude Code" "README.md"
+          grep -Fq "Codex" "AGENTS.md"
+          grep -Fq "Claude Code" "AGENTS.md"

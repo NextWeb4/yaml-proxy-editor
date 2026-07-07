@@ -1,0 +1,7 @@
+# Creator identity files require the repository owner.
+/src/app/creatorInfo.ts @NextWeb4
+/README.md @NextWeb4
+/AGENTS.md @NextWeb4
+/package.json @NextWeb4
+/src-tauri/Cargo.toml @NextWeb4
+/src-tauri/tauri.conf.json @NextWeb4

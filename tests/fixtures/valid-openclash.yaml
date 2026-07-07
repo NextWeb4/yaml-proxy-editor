@@ -1,0 +1,29 @@
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+dns:
+  enable: true
+  enhanced-mode: fake-ip
+  nameserver:
+    - 223.5.5.5
+  fallback:
+    - 1.1.1.1
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+proxies:
+  - name: HK-01 1x
+    type: ss
+    server: hk.example.local
+    port: 443
+proxy-groups:
+  - name: 节点选择
+    type: select
+    proxies:
+      - HK-01 1x
+      - DIRECT
+rules:
+  - DOMAIN-SUFFIX,openai.com,节点选择
+  - MATCH,节点选择
+

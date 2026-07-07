@@ -1,0 +1,24 @@
+[package]
+name = "yaml-proxy-editor"
+version = "0.1.0"
+description = "Local Windows EXE workbench for Clash/OpenClash/Mihomo YAML configuration"
+authors = ["HaoXiang Hwang <didadida1688@gmail.com>"]
+homepage = "https://nextweb4.github.io/"
+edition = "2021"
+
+[lib]
+name = "yaml_proxy_editor_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tempfile = "3.27"
+thiserror = "2"
+url = "2.5"

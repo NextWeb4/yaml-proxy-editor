@@ -1,0 +1,25 @@
+export const clashSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: {
+    port: { type: "number" },
+    "socks-port": { type: "number" },
+    "redir-port": { type: "number" },
+    "mixed-port": { type: "number" },
+    "tproxy-port": { type: "number" },
+    "allow-lan": { type: "boolean" },
+    mode: { enum: ["rule", "global", "direct"] },
+    "log-level": { enum: ["silent", "error", "warning", "info", "debug"] },
+    dns: { type: "object" },
+    proxies: { type: "array" },
+    "proxy-providers": { type: "object" },
+    "proxy-groups": { type: "array" },
+    "rule-providers": { type: "object" },
+    rules: { type: "array" },
+    tun: { type: "object" },
+    profile: { type: "object" },
+    sniffer: { type: "object" },
+    hosts: { type: "object" },
+  },
+};
+

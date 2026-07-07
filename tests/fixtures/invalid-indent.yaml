@@ -1,0 +1,6 @@
+mixed-port: 7890
+proxies:
+  - name: HK-01
+    type: ss
+     server: hk.example.local
+

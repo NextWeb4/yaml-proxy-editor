@@ -1,0 +1,12 @@
+mixed-port: 7890
+dns:
+  enable: false
+  enhanced-mode: redir-host
+  nameserver:
+    - 1.1.1.1
+  fallback:
+    - 223.5.5.5
+rules:
+  - DOMAIN-SUFFIX,ipleak.net,DIRECT
+  - MATCH,DIRECT
+

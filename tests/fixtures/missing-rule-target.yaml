@@ -1,0 +1,15 @@
+mixed-port: 7890
+proxies:
+  - name: HK-01
+    type: ss
+    server: hk.example.local
+    port: 443
+proxy-groups:
+  - name: 节点选择
+    type: select
+    proxies:
+      - HK-01
+rules:
+  - DOMAIN-SUFFIX,openai.com,不存在的分组
+  - MATCH,节点选择
+
