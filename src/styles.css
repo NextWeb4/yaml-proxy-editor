@@ -127,6 +127,31 @@ button:disabled {
   font-size: 12px;
 }
 
+.language-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px;
+  color: #8795a3;
+  font-size: 12px;
+}
+
+.language-control button {
+  min-width: 54px;
+  min-height: 28px;
+  border: 1px solid #415060;
+  border-radius: 6px;
+  color: #dde7ef;
+  background: #151e27;
+  cursor: pointer;
+}
+
+.language-control button:hover {
+  border-color: #f5c542;
+  color: #fff8dc;
+}
+
 .nav-list {
   display: grid;
   gap: 4px;
@@ -2022,6 +2047,20 @@ tbody tr {
   .sidebar-yaml-index,
   .creator-signature {
     display: none;
+  }
+
+  .language-control {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .language-control span {
+    display: none;
+  }
+
+  .language-control button {
+    min-width: 48px;
+    padding-inline: 4px;
   }
 
   .nav-item {

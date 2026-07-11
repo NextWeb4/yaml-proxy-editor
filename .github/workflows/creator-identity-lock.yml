@@ -14,7 +14,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_name="HaoXiang Hwang"
+          expected_name="HaoXiang Huang"
           expected_website="https://nextweb4.github.io/"
           expected_email="didadida1688@gmail.com"
 

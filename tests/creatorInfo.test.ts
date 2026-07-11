@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { CREATOR_INFO } from "../src/app/creatorInfo";
 
 const EXPECTED_CREATOR = {
-  name: "HaoXiang Hwang",
+  name: "HaoXiang Huang",
   website: "https://nextweb4.github.io/",
   email: "didadida1688@gmail.com",
 } as const;
@@ -62,5 +62,13 @@ describe("creator information lock", () => {
     expect(readme).toContain("Claude Code");
     expect(agents).toContain("Codex");
     expect(agents).toContain("Claude Code");
+  });
+
+  it("keeps the app language toggle persisted locally", () => {
+    const appSource = readFileSync(resolve("src/App.tsx"), "utf8");
+
+    expect(appSource).toContain("LANGUAGE_STORAGE_KEY");
+    expect(appSource).toContain("localStorage.setItem");
+    expect(appSource).toContain("language-control");
   });
 });
