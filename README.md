@@ -22,12 +22,20 @@ The creator identity above is fixed. Codex, Claude Code, and any other automated
 
 The prebuilt Windows installers are stored in the repository `release/` directory:
 
-- [EXE / NSIS installer](release/YAML-Proxy-Editor-0.1.0-x64-setup.exe)
-- [MSI zh-CN installer](release/YAML-Proxy-Editor-0.1.0-x64-zh-CN.msi)
+- [EXE / NSIS installer](release/YAML-Proxy-Editor-0.2.0-x64-setup.exe)
+- [MSI zh-CN installer](release/YAML-Proxy-Editor-0.2.0-x64-zh-CN.msi)
 
 ## 图文简介 / Illustrated Overview
 
-### 1. 本地 YAML 工作台 / Local YAML Workbench
+### 1. 单网站分流 / Per-site Routing
+
+中文：输入域名或完整 URL，选择精确匹配或包含子域名，再指定代理分组、直连或拒绝策略。完整 URL 只提取 hostname，规则默认放在顶部以优先命中。
+
+English: Enter a domain or full URL, choose exact or subdomain matching, then assign a proxy group, direct route, or reject policy. Only the hostname is written, and the rule defaults to top priority.
+
+![Per-site routing](artifacts/website-rule-desktop.png)
+
+### 2. 本地 YAML 工作台 / Local YAML Workbench
 
 中文：打开或拖入 `.yaml` / `.yml` 文件后，应用会在本地完成格式识别、结构统计、校验、格式化和多标签管理。
 
@@ -35,7 +43,7 @@ English: Open or drop `.yaml` / `.yml` files to validate, format, inspect struct
 
 ![Document tabs and editor](artifacts/editor-document-tabs.png)
 
-### 2. 订阅批量导入 / Batch Subscription Import
+### 3. 订阅批量导入 / Batch Subscription Import
 
 中文：支持一次粘贴多行订阅地址，自动识别名称和 URL，写入 `proxy-providers`，并在界面中只展示脱敏 URL。
 
@@ -43,7 +51,7 @@ English: Paste multiple subscription lines at once. The app extracts provider na
 
 ![Batch subscription import](artifacts/batch-subscription-import.png)
 
-### 3. 节点导出 / Node Export
+### 4. 节点导出 / Node Export
 
 中文：节点页可导出 Clash/Mihomo YAML、Clash Verge/OpenClash provider YAML、V2Ray/Hiddify 分享链接和 Base64 订阅内容。
 
@@ -51,7 +59,7 @@ English: The nodes page can export Clash/Mihomo YAML, Clash Verge/OpenClash prov
 
 ![Node export formats](artifacts/node-export-formats.png)
 
-### 4. 创作者署名 / Creator Signature
+### 5. 创作者署名 / Creator Signature
 
 中文：应用侧栏展示固定创作者署名、个人网页和邮箱，信息来自 `src/app/creatorInfo.ts`，并由测试和 GitHub 检查保护。
 
@@ -67,6 +75,7 @@ English: The app sidebar displays the fixed creator name, website, and email fro
 - 读取并维护当前 YAML 的 `proxy-providers`。
 - 批量粘贴订阅 URL，写入 provider 模板或刷新合并为节点。
 - 节点去重、筛选和多格式导出。
+- 单网站分流支持完整 URL/域名、精确/子域名匹配、策略选择和优先级更新。
 - 检查 rules 引用、规则顺序和 `MATCH` 兜底风险。
 - 审计并一键优化 DNS / fake-ip / IPv6 / TUN / IP 泄露风险。
 - OpenClash 导出预览和应用。
@@ -78,6 +87,7 @@ English: The app sidebar displays the fixed creator name, website, and email fro
 - Read and maintain `proxy-providers` from the active YAML.
 - Batch-paste subscription URLs, write provider templates, or refresh and merge nodes.
 - Deduplicate, filter, and export nodes in multiple formats.
+- Route a single website from a URL/domain with exact/subdomain matching, policy selection, and priority control.
 - Check rule references, rule order, and `MATCH` fallback risks.
 - Audit and optimize DNS / fake-ip / IPv6 / TUN / IP leak risks.
 - Preview and apply OpenClash exports.

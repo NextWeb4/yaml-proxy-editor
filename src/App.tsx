@@ -98,14 +98,17 @@ import {
 import {
   addRuleToYaml,
   applyRuleTemplateToYaml,
+  buildWebsiteRulePreview,
   commentRulesInYaml,
   deleteRuleFromYaml,
   importRulesToYaml,
   moveRuleInYaml,
   RULE_TEMPLATES,
   SUPPORTED_RULE_TYPES,
+  upsertWebsiteRuleInYaml,
   type RuleDraft,
   type RuleEditResult,
+  type WebsiteRuleDraft,
 } from "./services/rules/ruleEditor";
 import type {
   Finding,
@@ -777,11 +780,11 @@ export default function App() {
     }
   }
 
-  function applyRuleEdit(result: RuleEditResult, successMessage: string) {
+  function applyRuleEdit(result: RuleEditResult, successMessage: string): boolean {
     const blockingError = result.findings.find((finding) => finding.severity === "error");
     if (blockingError) {
       appendLog(`${blockingError.title}：${blockingError.message}`);
-      return;
+      return false;
     }
 
     updateContent(result.yaml);
@@ -789,6 +792,7 @@ export default function App() {
     for (const finding of result.findings.slice(0, 2)) {
       appendLog(`${finding.title}：${finding.message}`);
     }
+    return true;
   }
 
   function addRule(draft: RuleDraft) {
@@ -796,6 +800,15 @@ export default function App() {
       applyRuleEdit(addRuleToYaml(documentState.content, draft), "已添加分流规则");
     } catch (error) {
       appendLog(`添加规则失败：${String(error instanceof Error ? error.message : error)}`);
+    }
+  }
+
+  function upsertWebsiteRule(draft: WebsiteRuleDraft): boolean {
+    try {
+      return applyRuleEdit(upsertWebsiteRuleInYaml(documentState.content, draft), "已应用网站分流规则");
+    } catch (error) {
+      appendLog(`添加网站分流失败：${String(error instanceof Error ? error.message : error)}`);
+      return false;
     }
   }
 
@@ -1025,6 +1038,7 @@ export default function App() {
             rules={analysis.clash.rules}
             groups={analysis.clash.proxyGroups}
             findings={analysis.clash.findings.filter((finding) => finding.path?.startsWith("/rules"))}
+            onWebsiteRule={upsertWebsiteRule}
             onAdd={addRule}
             onDelete={deleteRule}
             onMove={moveRule}
@@ -1696,6 +1710,7 @@ function RulesPage({
   rules,
   groups,
   findings,
+  onWebsiteRule,
   onAdd,
   onDelete,
   onMove,
@@ -1706,6 +1721,7 @@ function RulesPage({
   rules: RuleItem[];
   groups: ProxyGroup[];
   findings: Finding[];
+  onWebsiteRule: (draft: WebsiteRuleDraft) => boolean;
   onAdd: (draft: RuleDraft) => void;
   onDelete: (index: number) => void;
   onMove: (index: number, direction: -1 | 1) => void;
@@ -1713,6 +1729,7 @@ function RulesPage({
   onImport: (rawInput: string) => void;
   onComment: (indexes: number[]) => void;
 }) {
+  type RuleToolTab = "website" | "advanced" | "batch" | "templates";
   const targetOptions = useMemo(() => {
     const builtIns = ["DIRECT", "REJECT", "GLOBAL"];
     return Array.from(new Set([...groups.map((group) => group.name), ...builtIns]));
@@ -1724,14 +1741,27 @@ function RulesPage({
     target: defaultTarget,
     noResolve: false,
   });
+  const [websiteDraft, setWebsiteDraft] = useState<WebsiteRuleDraft>({
+    website: "",
+    scope: "suffix",
+    target: defaultTarget,
+    priority: "top",
+  });
+  const [activeToolTab, setActiveToolTab] = useState<RuleToolTab>("website");
+  const [ruleFilter, setRuleFilter] = useState("");
   const [bulkRules, setBulkRules] = useState("");
   const [selectedRuleIndexes, setSelectedRuleIndexes] = useState<number[]>([]);
   const selectedRuleSet = useMemo(() => new Set(selectedRuleIndexes), [selectedRuleIndexes]);
   const ruleSignature = useMemo(() => rules.map((rule) => `${rule.index}:${rule.raw}`).join("\u0000"), [rules]);
 
   useEffect(() => {
-    setDraft((current) => (current.target ? current : { ...current, target: defaultTarget }));
-  }, [defaultTarget]);
+    setDraft((current) =>
+      targetOptions.includes(current.target) ? current : { ...current, target: defaultTarget },
+    );
+    setWebsiteDraft((current) =>
+      targetOptions.includes(current.target) ? current : { ...current, target: defaultTarget },
+    );
+  }, [defaultTarget, targetOptions]);
 
   useEffect(() => {
     const selectable = new Set(rules.filter((rule) => rule.type !== "MATCH").map((rule) => rule.index));
@@ -1741,8 +1771,29 @@ function RulesPage({
   const showValueInput = draft.type !== "MATCH";
   const showNoResolve = draft.type === "IP-CIDR" || draft.type === "IP-CIDR6" || draft.type === "GEOIP";
   const commentableRuleIndexes = rules.filter((rule) => rule.type !== "MATCH").map((rule) => rule.index);
+  const normalizedRuleFilter = ruleFilter.trim().toLowerCase();
+  const visibleRules = normalizedRuleFilter
+    ? rules.filter((rule) => rule.raw.toLowerCase().includes(normalizedRuleFilter))
+    : rules;
+  const visibleCommentableRuleIndexes = visibleRules
+    .filter((rule) => rule.type !== "MATCH")
+    .map((rule) => rule.index);
   const allCommentableSelected =
-    commentableRuleIndexes.length > 0 && commentableRuleIndexes.every((index) => selectedRuleSet.has(index));
+    visibleCommentableRuleIndexes.length > 0 &&
+    visibleCommentableRuleIndexes.every((index) => selectedRuleSet.has(index));
+  const websiteRuleCount = rules.filter((rule) => rule.type === "DOMAIN" || rule.type === "DOMAIN-SUFFIX").length;
+  const websitePreview = useMemo(() => {
+    try {
+      return { value: buildWebsiteRulePreview(websiteDraft), error: undefined };
+    } catch (error) {
+      return {
+        value: undefined,
+        error: websiteDraft.website.trim()
+          ? String(error instanceof Error ? error.message : error)
+          : undefined,
+      };
+    }
+  }, [websiteDraft]);
 
   function toggleRuleSelection(index: number, checked: boolean) {
     setSelectedRuleIndexes((current) => {
@@ -1754,7 +1805,13 @@ function RulesPage({
   }
 
   function toggleAllCommentable(checked: boolean) {
-    setSelectedRuleIndexes(checked ? commentableRuleIndexes : []);
+    setSelectedRuleIndexes((current) => {
+      if (checked) {
+        return Array.from(new Set([...current, ...visibleCommentableRuleIndexes]));
+      }
+      const visibleSet = new Set(visibleCommentableRuleIndexes);
+      return current.filter((index) => !visibleSet.has(index));
+    });
   }
 
   function commentSelectedRules() {
@@ -1762,147 +1819,301 @@ function RulesPage({
     setSelectedRuleIndexes([]);
   }
 
+  function submitWebsiteRule() {
+    if (!websitePreview.value) return;
+    if (onWebsiteRule(websiteDraft)) {
+      setWebsiteDraft((current) => ({ ...current, website: "" }));
+    }
+  }
+
   return (
-    <div className="page table-page">
-      <section className="work-panel">
+    <div className="page table-page rules-page">
+      <section className="work-panel rule-list-panel">
         <div className="panel-actions">
           <PanelHeader icon={<ListChecks size={18} />} title="分流规则" />
-          <button type="button" onClick={commentSelectedRules} disabled={selectedRuleIndexes.length === 0} title="批量注释选中规则">
-            <Hash size={16} />
-            <span>注释选中</span>
-          </button>
+          <div className="panel-action-group">
+            <label className="rule-filter-field">
+              <SearchCheck size={15} />
+              <input
+                value={ruleFilter}
+                onChange={(event) => setRuleFilter(event.target.value)}
+                placeholder="筛选规则"
+                aria-label="筛选规则"
+              />
+            </label>
+            <button type="button" onClick={commentSelectedRules} disabled={selectedRuleIndexes.length === 0} title="批量注释选中规则">
+              <Hash size={16} />
+              <span>注释选中</span>
+            </button>
+          </div>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th className="rule-selection-cell">
-                <input
-                  type="checkbox"
-                  aria-label="选择全部可注释规则"
-                  checked={allCommentableSelected}
-                  disabled={commentableRuleIndexes.length === 0}
-                  onChange={(event) => toggleAllCommentable(event.target.checked)}
-                />
-              </th>
-              <th>#</th>
-              <th>类型</th>
-              <th>匹配</th>
-              <th>目标</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.map((rule) => (
-              <tr key={`${rule.index}-${rule.raw}`}>
-                <td className="rule-selection-cell">
+        <div className="rule-overview" aria-label="规则概览">
+          <span><strong>{rules.length}</strong> 条规则</span>
+          <span><strong>{websiteRuleCount}</strong> 条网站规则</span>
+          <span><strong>{targetOptions.length}</strong> 个可选策略</span>
+          {normalizedRuleFilter && <span><strong>{visibleRules.length}</strong> 条匹配</span>}
+        </div>
+        <div className="rule-table-scroll">
+          <table className="rules-table">
+            <thead>
+              <tr>
+                <th className="rule-selection-cell">
                   <input
                     type="checkbox"
-                    aria-label={`选择第 ${rule.index + 1} 条规则`}
-                    checked={selectedRuleSet.has(rule.index)}
-                    disabled={rule.type === "MATCH"}
-                    onChange={(event) => toggleRuleSelection(rule.index, event.target.checked)}
+                    aria-label="选择全部可注释规则"
+                    checked={allCommentableSelected}
+                    disabled={visibleCommentableRuleIndexes.length === 0}
+                    onChange={(event) => toggleAllCommentable(event.target.checked)}
                   />
-                </td>
-                <td>{rule.index + 1}</td>
-                <td>{rule.type}</td>
-                <td>{rule.value || "-"}</td>
-                <td>{rule.target ?? "-"}</td>
-                <td>
-                  <div className="table-actions">
-                    <button type="button" title="上移" onClick={() => onMove(rule.index, -1)} disabled={rule.index === 0}>
-                      <ArrowUp size={14} />
-                    </button>
-                    <button type="button" title="下移" onClick={() => onMove(rule.index, 1)} disabled={rule.index >= rules.length - 1}>
-                      <ArrowDown size={14} />
-                    </button>
-                    <button type="button" title="删除" onClick={() => onDelete(rule.index)}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
+                </th>
+                <th className="rule-index-cell">#</th>
+                <th className="rule-type-cell">类型</th>
+                <th>匹配</th>
+                <th className="rule-target-cell">目标</th>
+                <th className="rule-action-cell">操作</th>
               </tr>
-            ))}
-            {rules.length === 0 && (
-              <tr>
-                <td colSpan={6}>暂无 rules，添加规则后会自动补 MATCH 兜底。</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-      <section className="work-panel">
-        <PanelHeader icon={<Plus size={18} />} title="添加规则" />
-        <div className="rule-form">
-          <label>
-            <span>类型</span>
-            <select value={draft.type} onChange={(event) => setDraft((current) => ({ ...current, type: event.target.value }))}>
-              {SUPPORTED_RULE_TYPES.map((type) => (
-                <option value={type} key={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </label>
-          {showValueInput && (
-            <label>
-              <span>匹配值</span>
-              <input
-                value={draft.value ?? ""}
-                onChange={(event) => setDraft((current) => ({ ...current, value: event.target.value }))}
-                placeholder="example.com / geosite / cidr"
-              />
-            </label>
-          )}
-          <label>
-            <span>目标</span>
-            <select value={draft.target} onChange={(event) => setDraft((current) => ({ ...current, target: event.target.value }))}>
-              {targetOptions.map((target) => (
-                <option value={target} key={target}>
-                  {target}
-                </option>
-              ))}
-            </select>
-          </label>
-          {showNoResolve && (
-            <label className="inline-check">
-              <input
-                type="checkbox"
-                checked={draft.noResolve ?? false}
-                onChange={(event) => setDraft((current) => ({ ...current, noResolve: event.target.checked }))}
-              />
-              no-resolve
-            </label>
-          )}
-          <button type="button" className="primary-action" onClick={() => onAdd(draft)}>
-            <Plus size={16} />
-            <span>添加</span>
-          </button>
+            </thead>
+            <tbody>
+              {visibleRules.map((rule) => {
+                const isWebsiteRule = rule.type === "DOMAIN" || rule.type === "DOMAIN-SUFFIX";
+                return (
+                  <tr key={`${rule.index}-${rule.raw}`} className={isWebsiteRule ? "website-rule-row" : undefined}>
+                    <td className="rule-selection-cell">
+                      <input
+                        type="checkbox"
+                        aria-label={`选择第 ${rule.index + 1} 条规则`}
+                        checked={selectedRuleSet.has(rule.index)}
+                        disabled={rule.type === "MATCH"}
+                        onChange={(event) => toggleRuleSelection(rule.index, event.target.checked)}
+                      />
+                    </td>
+                    <td>{rule.index + 1}</td>
+                    <td><span className={`rule-type-badge${isWebsiteRule ? " website" : ""}`}>{rule.type}</span></td>
+                    <td className="rule-value-cell" title={rule.value || undefined}>{rule.value || "-"}</td>
+                    <td className="rule-target-value" title={rule.target}>{rule.target ?? "-"}</td>
+                    <td>
+                      <div className="table-actions">
+                        <button type="button" title="上移" onClick={() => onMove(rule.index, -1)} disabled={rule.index === 0}>
+                          <ArrowUp size={14} />
+                        </button>
+                        <button type="button" title="下移" onClick={() => onMove(rule.index, 1)} disabled={rule.index >= rules.length - 1}>
+                          <ArrowDown size={14} />
+                        </button>
+                        <button type="button" title="删除" onClick={() => onDelete(rule.index)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {visibleRules.length === 0 && (
+                <tr>
+                  <td colSpan={6}>{rules.length === 0 ? "暂无 rules。" : "没有匹配的规则。"}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        <PanelHeader icon={<Upload size={18} />} title="批量导入" />
-        <textarea
-          className="bulk-rule-input"
-          value={bulkRules}
-          onChange={(event) => setBulkRules(event.target.value)}
-          placeholder={"DOMAIN-SUFFIX,example.com,节点选择\nDOMAIN-KEYWORD,openai,节点选择"}
-        />
-        <button type="button" className="primary-action" onClick={() => onImport(bulkRules)} disabled={!bulkRules.trim()}>
-          <Upload size={16} />
-          <span>批量导入</span>
-        </button>
-
-        <PanelHeader icon={<WandSparkles size={18} />} title="规则模板" />
-        <div className="template-list">
-          {RULE_TEMPLATES.map((template) => (
-            <button type="button" key={template.id} onClick={() => onTemplate(template.id, draft.target)} title={template.description}>
-              <span>{template.name}</span>
-              <em>{template.description}</em>
+      </section>
+      <section className="work-panel rule-tool-panel">
+        <div className="rule-tool-tabs" role="tablist" aria-label="规则工具">
+          {([
+            ["website", "网站"],
+            ["advanced", "高级"],
+            ["batch", "批量"],
+            ["templates", "模板"],
+          ] as const).map(([id, label]) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeToolTab === id}
+              className={activeToolTab === id ? "active" : undefined}
+              onClick={() => setActiveToolTab(id)}
+              key={id}
+            >
+              {label}
             </button>
           ))}
         </div>
 
-        <PanelHeader icon={<AlertTriangle size={18} />} title="规则检查" />
-        <FindingList findings={findings} />
+        <div className="rule-tool-body">
+          {activeToolTab === "website" && (
+            <div className="rule-tool-section website-rule-form">
+              <PanelHeader icon={<Globe2 size={18} />} title="网站分流" />
+              <label>
+                <span>网站</span>
+                <input
+                  value={websiteDraft.website}
+                  onChange={(event) => setWebsiteDraft((current) => ({ ...current, website: event.target.value }))}
+                  placeholder="example.com 或完整 URL"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                />
+              </label>
+              <fieldset className="rule-choice-group">
+                <legend>匹配范围</legend>
+                <div className="rule-choice-control">
+                  <button
+                    type="button"
+                    className={websiteDraft.scope === "exact" ? "active" : undefined}
+                    onClick={() => setWebsiteDraft((current) => ({ ...current, scope: "exact" }))}
+                    title="仅匹配当前 hostname"
+                  >
+                    仅此域名
+                  </button>
+                  <button
+                    type="button"
+                    className={websiteDraft.scope === "suffix" ? "active" : undefined}
+                    onClick={() => setWebsiteDraft((current) => ({ ...current, scope: "suffix" }))}
+                    title="匹配当前域名及其子域名"
+                  >
+                    含子域名
+                  </button>
+                </div>
+              </fieldset>
+              <label>
+                <span>适用策略</span>
+                <select
+                  value={websiteDraft.target}
+                  onChange={(event) => setWebsiteDraft((current) => ({ ...current, target: event.target.value }))}
+                >
+                  {targetOptions.map((target) => (
+                    <option value={target} key={target}>{target}</option>
+                  ))}
+                </select>
+              </label>
+              <fieldset className="rule-choice-group">
+                <legend>优先级</legend>
+                <div className="rule-choice-control">
+                  <button
+                    type="button"
+                    className={websiteDraft.priority === "top" ? "active" : undefined}
+                    onClick={() => setWebsiteDraft((current) => ({ ...current, priority: "top" }))}
+                    title="放到规则顶部"
+                  >
+                    优先
+                  </button>
+                  <button
+                    type="button"
+                    className={websiteDraft.priority === "before-match" ? "active" : undefined}
+                    onClick={() => setWebsiteDraft((current) => ({ ...current, priority: "before-match" }))}
+                    title="放到 MATCH 前"
+                  >
+                    普通
+                  </button>
+                </div>
+              </fieldset>
+              <div className={`website-rule-preview${websitePreview.error ? " error" : ""}`} aria-live="polite">
+                <span>YAML 规则</span>
+                <code>{websitePreview.value?.raw ?? websitePreview.error ?? "DOMAIN-SUFFIX,example.com,策略"}</code>
+              </div>
+              <button
+                type="button"
+                className="primary-action"
+                onClick={submitWebsiteRule}
+                disabled={!websitePreview.value}
+              >
+                <Plus size={16} />
+                <span>应用网站规则</span>
+              </button>
+            </div>
+          )}
+
+          {activeToolTab === "advanced" && (
+            <div className="rule-tool-section">
+              <PanelHeader icon={<Settings size={18} />} title="高级规则" />
+              <div className="rule-form">
+                <label>
+                  <span>类型</span>
+                  <select value={draft.type} onChange={(event) => setDraft((current) => ({ ...current, type: event.target.value }))}>
+                    {SUPPORTED_RULE_TYPES.map((type) => (
+                      <option value={type} key={type}>{type}</option>
+                    ))}
+                  </select>
+                </label>
+                {showValueInput && (
+                  <label>
+                    <span>匹配值</span>
+                    <input
+                      value={draft.value ?? ""}
+                      onChange={(event) => setDraft((current) => ({ ...current, value: event.target.value }))}
+                      placeholder="domain / geosite / cidr"
+                    />
+                  </label>
+                )}
+                <label>
+                  <span>目标</span>
+                  <select value={draft.target} onChange={(event) => setDraft((current) => ({ ...current, target: event.target.value }))}>
+                    {targetOptions.map((target) => (
+                      <option value={target} key={target}>{target}</option>
+                    ))}
+                  </select>
+                </label>
+                {showNoResolve && (
+                  <label className="inline-check">
+                    <input
+                      type="checkbox"
+                      checked={draft.noResolve ?? false}
+                      onChange={(event) => setDraft((current) => ({ ...current, noResolve: event.target.checked }))}
+                    />
+                    no-resolve
+                  </label>
+                )}
+                <button type="button" className="primary-action" onClick={() => onAdd(draft)}>
+                  <Plus size={16} />
+                  <span>添加高级规则</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeToolTab === "batch" && (
+            <div className="rule-tool-section">
+              <PanelHeader icon={<Upload size={18} />} title="批量导入" />
+              <textarea
+                className="bulk-rule-input"
+                value={bulkRules}
+                onChange={(event) => setBulkRules(event.target.value)}
+                placeholder={"DOMAIN-SUFFIX,example.com,节点选择\nDOMAIN-KEYWORD,openai,节点选择"}
+              />
+              <button type="button" className="primary-action" onClick={() => onImport(bulkRules)} disabled={!bulkRules.trim()}>
+                <Upload size={16} />
+                <span>导入规则</span>
+              </button>
+            </div>
+          )}
+
+          {activeToolTab === "templates" && (
+            <div className="rule-tool-section">
+              <PanelHeader icon={<WandSparkles size={18} />} title="规则模板" />
+              <label className="template-target-field">
+                <span>适用策略</span>
+                <select
+                  value={draft.target}
+                  onChange={(event) => setDraft((current) => ({ ...current, target: event.target.value }))}
+                >
+                  {targetOptions.map((target) => (
+                    <option value={target} key={target}>{target}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="template-list">
+                {RULE_TEMPLATES.map((template) => (
+                  <button type="button" key={template.id} onClick={() => onTemplate(template.id, draft.target)} title={template.description}>
+                    <span>{template.name}</span>
+                    <em>{template.description}</em>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="rule-findings-section">
+          <PanelHeader icon={<AlertTriangle size={18} />} title="规则检查" />
+          <FindingList findings={findings} compact />
+        </div>
       </section>
     </div>
   );

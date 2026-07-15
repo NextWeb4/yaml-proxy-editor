@@ -129,8 +129,8 @@ Vite warning: 懒加载的 Monaco 编辑器 chunk 和 YAML worker 大于 500 kB
 
 ```text
 src-tauri/target/release/yaml-proxy-editor.exe
-src-tauri/target/release/bundle/nsis/YAML 代理配置编辑器_0.1.0_x64-setup.exe
-src-tauri/target/release/bundle/msi/YAML 代理配置编辑器_0.1.0_x64_zh-CN.msi
+src-tauri/target/release/bundle/nsis/YAML 代理配置编辑器_0.2.0_x64-setup.exe
+src-tauri/target/release/bundle/msi/YAML 代理配置编辑器_0.2.0_x64_zh-CN.msi
 ```
 
 Tauri 打包时会按需下载并缓存 NSIS / WiX 工具到 `%LOCALAPPDATA%\tauri`，下载由 `npm run tauri:build` 主动触发，不属于应用运行时联网行为。

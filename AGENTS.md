@@ -20,6 +20,7 @@
 - TypeScript 类型检查：`npx tsc -b`。
 - Rust 后端测试：`cmd /c ""C:\Program1\VC\Auxiliary\Build\vcvars64.bat" && cargo test"`，工作目录为 `src-tauri`。
 - 修改 `src/services/` 下 YAML、Clash、订阅、节点、规则、DNS、OpenClash、配置优化、备份或合并逻辑后，必须新增或更新 `tests/`。
+- 修改单网站分流或规则页交互后，必须运行 `npm run test -- tests/ruleEditor.test.ts`，并运行 `artifacts/verify_website_rule_ui.py` 验证桌面与窄屏布局。
 - 修改 `src-tauri/src/commands/` 或 `src-tauri/src/core/` 后，必须运行 `cargo fmt` 和上述 Rust 后端测试；当前本机已安装 `rustfmt`。
 - 当前未发现单独的 lint / format 命令；如新增，必须写入 `package.json` 和本文档。
 
@@ -34,6 +35,7 @@
 - 前端使用 TypeScript + React；新增业务逻辑优先写成 `src/services/` 下的纯函数，并配套 Vitest。
 - UI 组件只组合状态和服务结果，不直接写 YAML 解析、订阅下载、规则修正、DNS 防泄露或文件写入逻辑。
 - 新增图标按钮优先使用 `lucide-react`。
+- 单网站地址解析、hostname 规范化、重复规则替换和插入优先级必须放在 `src/services/rules/ruleEditor.ts`；`RulesPage` 只收集表单值并展示预览/结果。
 - 创作者信息必须从 `src/app/creatorInfo.ts` 读取；署名、个人网页、邮箱为固定项目，不得在页面组件中另写一份可漂移的副本。
 - 编辑器页默认必须先渲染轻量 textarea，用户点击 Monaco 图标后才允许渲染 `YamlEditor` 并加载 Monaco 大 chunk；不要把编辑器实现塞回首屏主 chunk。
 - Monaco worker 初始化只允许由 `src/components/editor/YamlEditor.tsx` 懒加载触发；不要在 `src/main.tsx` 或 `src/App.tsx` 静态导入 `src/app/monacoWorkers.ts`。
@@ -48,6 +50,8 @@
 - 订阅测试/刷新前端逻辑只允许在 `src/services/subscription/`，Tauri 原生订阅请求只允许在 `src-tauri/src/commands/subscription_commands.rs`；远程 provider 检查只允许在 `src/services/provider_check/`，测速只允许在 `src/services/speedtest/`。
 - 批量订阅文本解析只允许放在 `src/services/subscription/batchSubscription.ts`；页面只传入原始多行文本并展示 findings，不得在组件里手写 URL 提取、命名或脱敏。
 - 节点订阅导出和 Clash/V2Ray/Hiddify 分享链接转换只允许放在 `src/services/subscription/subscriptionExport.ts`；节点页只负责筛选、选择格式、复制和展示结果。
+- 单网站分流必须接受域名或完整 URL，仅把规范化后的 hostname 写入 YAML；不得保存 URL path、query、username 或 password，也不得因填写网站触发网络请求。
+- 单网站分流默认写入 `rules` 顶部以优先于宽泛规则；用户选择普通优先级时才写到 `MATCH` 前。相同类型和 hostname 的旧规则必须替换目标而不是并存冲突，`MATCH` 必须继续保持最后一条。
 - Tauri 原生订阅请求必须使用 Rust `url` crate 解析和规范化 URL，并与前端保持同等边界：只允许 `http` / `https`、必须有主机名、不得包含空白或控制字符。
 - Tauri 原生订阅请求写 curl 响应头/响应体时必须使用 `tempfile` 创建独占临时目录，并在成功、HTTP 错误、curl 启动失败、响应读取失败时清理。
 - Tauri 原生订阅请求返回 curl stderr 前必须脱敏当前请求 URL；完整 URL、path、query、username、password 不得出现在 Rust `AppError::Network` 文本中。
@@ -66,10 +70,12 @@
 - 不允许 Codex、Claude Code 或任何自动化/AI 编码工具修改 `src/app/creatorInfo.ts`、`README.md`、`package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json` 中的创作者署名 `HaoXiang Hwang`、个人网页 `https://nextweb4.github.io/`、邮箱 `didadida1688@gmail.com`。
 - 不允许为 YAML 解析、Monaco 高亮、diff、schema 校验重复造轮子；优先复用当前依赖 `yaml`、`monaco-yaml`、`json-diff-ts`。
 - 不允许在 `src/App.tsx` 中继续堆叠新的大块业务算法；新增算法必须下沉到服务模块。
+- 不允许页面用字符串拼接直接生成 `DOMAIN` / `DOMAIN-SUFFIX` 网站规则，也不允许在日志中记录用户输入的完整 URL。
 - 不允许为了修 bug 大范围重写配置编辑链路；先复现、定位输入/状态/转换/输出，再做最小修复。
 
 ## 8. 完成标准
 - 涉及 YAML 改写的功能必须可通过 `npx tsc -b` 和对应 Vitest 验证。
+- 单网站分流完成标准包括：完整 URL/裸域名规范化、精确/子域名匹配、策略分组选择、顶部/普通优先级、同站点目标更新、非法输入保护、`MATCH` 兜底顺序和 UI 窄屏无重叠。
 - 涉及保存文件的行为必须继续走保存前校验和备份链路。
 - 涉及网络的行为必须由用户点击触发，并在 UI/日志中使用脱敏 URL。
 - 发布前不能只验证前端构建；需要验证 `npm run build`，发布任务还需要验证 `npm run tauri:build` 产物。
@@ -88,6 +94,7 @@
 - 修改远程 provider 检查后，必须覆盖可访问但返回 HTML/登录页/空响应的 warning、proxy YAML 节点计数、rule YAML/text 规则计数、`format: mrs` 不解析内容，以及失败错误不泄漏 provider URL token。
 - 修改节点页后，必须检查只有 `proxy-providers` 和少量本地 `direct/reject` 的 YAML 能展示订阅源列表。
 - 修改 `src/services/yaml/yamlService.ts` 后，必须检查普通 Clash YAML、重复 key YAML、错误缩进 YAML 的格式识别和配置清单。
+- 修改单网站分流后，必须检查 URL path/query/凭据不会进入规则，IPv4/IPv6 输入会提示使用高级 IP 规则，重复站点不会产生互相冲突的规则，且现有规则表、批量导入、模板和注释功能不回归。
 - 页面组件不得直接承担订阅下载、测速、文件写入或 YAML 结构改写职责。
 - 修改 `vite.config.ts` 的分块、module preload 或 HTML 生成逻辑后，必须检查 `dist/index.html` 不包含 `vendor-monaco-editor` / `vendor-monaco-yaml` / `YamlEditor` 的首屏 preload 或 stylesheet link。
 - 修改编辑器页加载逻辑后，必须检查默认渲染路径不会出现 `<YamlEditor>`，运行 `tests/monacoLazyLoad.test.ts`，并用 `artifacts/verify_editor_lazy_load.py` 做默认 textarea / 手动启用 Monaco 的 Playwright 验证。
@@ -100,3 +107,4 @@
 - Monaco 固定在 `0.52.2`；升级前必须同时验证 npm audit 和 `monaco-yaml` worker 兼容性。
 - Vite 大 chunk warning 当前主要来自懒加载的 Monaco 编辑器和 YAML worker；不要通过单纯提高 `chunkSizeWarningLimit` 掩盖，先确认首屏入口和 HTML preload 边界。
 - 订阅和测速功能容易突破离线边界，新增请求必须集中在允许联网模块内。
+- Clash/Mihomo 规则按顺序命中；单网站规则若错误追加在宽泛 GEOSITE/GEOIP 后可能不生效，因此默认优先插入顶部并必须有顺序测试。

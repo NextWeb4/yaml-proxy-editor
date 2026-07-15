@@ -1,6 +1,6 @@
 [package]
 name = "yaml-proxy-editor"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local Windows EXE workbench for Clash/OpenClash/Mihomo YAML configuration"
 authors = ["HaoXiang Hwang <didadida1688@gmail.com>"]
 homepage = "https://nextweb4.github.io/"

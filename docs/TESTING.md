@@ -22,7 +22,8 @@ npm run tauri:build
 最近一次本地验证：
 
 ```text
-npm run test: 26 个测试文件 / 141 个测试通过
+npm run test: 26 个测试文件 / 149 个测试通过
+npm run test -- tests/ruleEditor.test.ts: 1 个测试文件 / 20 个测试通过
 npm run test -- tests/batchSubscription.test.ts tests/configOptimizer.test.ts tests/subscriptionExport.test.ts tests/subscriptionParser.test.ts tests/nodeManager.test.ts: 5 个测试文件 / 30 个测试通过
 npm run test -- tests/providerCheck.test.ts: 1 个测试文件 / 11 个测试通过
 npm run test -- tests/clashService.test.ts tests/ruleEditor.test.ts tests/mergeConfig.test.ts: 3 个测试文件 / 27 个测试通过
@@ -40,8 +41,8 @@ npm audit --audit-level=low: 0 vulnerabilities
 cmd /c ""C:\Program1\VC\Auxiliary\Build\vcvars64.bat" && cargo fmt && cargo test": 5 个 Rust 测试通过
 npm run tauri:build: 通过，已生成 Windows EXE / NSIS / MSI
 Tauri 产物: src-tauri/target/release/yaml-proxy-editor.exe
-Tauri 产物: src-tauri/target/release/bundle/nsis/YAML 代理配置编辑器_0.1.0_x64-setup.exe
-Tauri 产物: src-tauri/target/release/bundle/msi/YAML 代理配置编辑器_0.1.0_x64_zh-CN.msi
+Tauri 产物: src-tauri/target/release/bundle/nsis/YAML 代理配置编辑器_0.2.0_x64-setup.exe
+Tauri 产物: src-tauri/target/release/bundle/msi/YAML 代理配置编辑器_0.2.0_x64_zh-CN.msi
 已知 warning: Vite 提示 Monaco/YAML worker chunk 大于 500 kB；默认编辑页使用轻量 textarea，点击 Monaco 图标后才加载编辑器大 chunk
 Playwright YAML 新建 Mihomo 模板验证: 通过，截图 artifacts/editor-new-template-mihomo.png
 Playwright 节点管理页验证: 通过，截图 artifacts/nodes-manager.png、artifacts/nodes-add-to-group.png
@@ -53,6 +54,7 @@ Playwright OpenClash 远程 provider 检查入口验证: 通过，截图 artifac
 Playwright 编辑器渐进加载验证: 通过，脚本 artifacts/verify_editor_lazy_load.py，截图 artifacts/editor-lazy-before.png 和 artifacts/editor-lazy-after.png
 Playwright 左侧栏紧凑索引和点击后不折叠验证: 通过，脚本 artifacts/verify_sidebar_index_compact.py，截图 artifacts/sidebar-index-compact.png 和 artifacts/sidebar-index-after-click-1000.png
 Playwright 批量订阅写入和节点多格式导出验证: 通过，脚本 artifacts/verify_batch_subscription_export.py，截图 artifacts/batch-subscription-import.png 和 artifacts/node-export-formats.png
+Playwright 单网站分流和规则页响应式验证: 通过，脚本 artifacts/verify_website_rule_ui.py，截图 artifacts/website-rule-desktop.png、artifacts/website-rule-1000.png 和 artifacts/website-rule-narrow.png
 Playwright YAML 多标签页验证: 通过，截图 artifacts/editor-document-tabs.png
 Playwright 订阅节点导入当前 YAML 验证: 通过，截图 artifacts/subscription-import-nodes.png
 App.tsx 不可达旧页面清理验证: SpeedtestPage / MergePage / BackupsPage / SettingsPage / GroupsPage 均不存在
@@ -86,6 +88,7 @@ App.tsx 不可达旧页面清理验证: SpeedtestPage / MergePage / BackupsPage 
 - 节点管理筛选 / 地区和倍率推断 / 重命名 / 禁用 / 批量加入分组 / 导出测试；导出必须覆盖 Clash/Mihomo YAML、Clash Verge/OpenClash provider YAML、V2Ray/Hiddify 分享链接、Base64 订阅内容和无法转换节点 warning
 - 测速队列生成 / 取消 / 结果评分 / 分组推荐 / Mihomo controller 延迟测速 / 默认测速 URL / 下载 URL 受控测速 / 响应体读取超时 / 日志脱敏和失败错误脱敏测试
 - 规则新增 / 删除 / 移动 / 模板 / 批量导入 / 批量注释 / 重复测试
+- 单网站分流测试，包括完整 URL 只保留 hostname、精确/子域名匹配、顶部/普通优先级、同站点目标替换、IP/非法输入保护、规则筛选和窄屏无重叠
 - OpenClash 兼容检查测试，包括 provider URL / interval / path / health-check
 - 远程 provider 检查测试，包括目标提取、协议限制、URL 脱敏、proxy YAML 结构计数、rule YAML/text 结构计数、HTML/未知结构 warning、响应读取上限和失败脱敏
 - OpenClash 导出测试

@@ -11,6 +11,22 @@ export interface RuleDraft {
   noResolve?: boolean;
 }
 
+export type WebsiteRuleScope = "exact" | "suffix";
+export type WebsiteRulePriority = "top" | "before-match";
+
+export interface WebsiteRuleDraft {
+  website: string;
+  scope: WebsiteRuleScope;
+  target: string;
+  priority?: WebsiteRulePriority;
+}
+
+export interface WebsiteRulePreview {
+  hostname: string;
+  raw: string;
+  priority: WebsiteRulePriority;
+}
+
 export interface RuleTemplate {
   id: string;
   name: string;
@@ -115,6 +131,52 @@ export function buildRuleRaw(draft: RuleDraft): string {
   }
 
   return parts.join(",");
+}
+
+export function buildWebsiteRulePreview(draft: WebsiteRuleDraft): WebsiteRulePreview {
+  const hostname = normalizeWebsiteHostname(draft.website);
+  const type = draft.scope === "exact" ? "DOMAIN" : "DOMAIN-SUFFIX";
+
+  return {
+    hostname,
+    raw: buildRuleRaw({ type, value: hostname, target: draft.target }),
+    priority: draft.priority ?? "top",
+  };
+}
+
+export function upsertWebsiteRuleInYaml(source: string, draft: WebsiteRuleDraft): RuleEditResult {
+  const parsed = parseConfig(source);
+  if (parsed.findings.length > 0) return { yaml: source, findings: parsed.findings };
+
+  const preview = buildWebsiteRulePreview(draft);
+  const parsedRules = parseRules(readRuleStrings(parsed.config));
+  const matchingRules = parsedRules.filter(
+    (rule) =>
+      (rule.type === "DOMAIN" || rule.type === "DOMAIN-SUFFIX") &&
+      normalizeComparableHostname(rule.value) === preview.hostname,
+  );
+  const remainingRules = parsedRules
+    .filter((rule) => !matchingRules.some((matchingRule) => matchingRule.index === rule.index))
+    .map((rule) => rule.raw);
+  const nextRules = insertRuleAtPriority(remainingRules, preview.raw, preview.priority);
+  const result = writeRules(parsed.config, nextRules);
+
+  return {
+    yaml: result.yaml,
+    findings: [
+      {
+        id: matchingRules.length > 0 ? "website-rule-updated" : "website-rule-added",
+        severity: "info",
+        title: matchingRules.length > 0 ? "网站分流已更新" : "网站分流已添加",
+        message:
+          preview.priority === "top"
+            ? "规则已放在顶部，优先于宽泛分流规则匹配。"
+            : "规则已放在 MATCH 前，按现有规则顺序参与匹配。",
+        path: "/rules",
+      },
+      ...result.findings,
+    ],
+  };
 }
 
 export function addRuleToYaml(source: string, draft: RuleDraft): RuleEditResult {
@@ -473,6 +535,71 @@ function insertBeforeMatch(rules: string[], rawRule: string): string[] {
   const nextRules = [...rules];
   nextRules.splice(matchIndex >= 0 ? matchIndex : nextRules.length, 0, rawRule);
   return normalizeRuleStrings(nextRules);
+}
+
+function insertRuleAtPriority(rules: string[], rawRule: string, priority: WebsiteRulePriority): string[] {
+  const normalized = normalizeRuleStrings(rules);
+  const nonMatchRules = parseRules(normalized)
+    .filter((rule) => rule.type !== "MATCH" && rule.raw !== rawRule)
+    .map((rule) => rule.raw);
+  const matchRule = [...parseRules(normalized)].reverse().find((rule) => rule.type === "MATCH")?.raw ?? "MATCH,DIRECT";
+
+  return priority === "top" ? [rawRule, ...nonMatchRules, matchRule] : [...nonMatchRules, rawRule, matchRule];
+}
+
+function normalizeWebsiteHostname(rawInput: string): string {
+  const input = rawInput.trim();
+  if (!input) {
+    throw new Error("请输入网站域名或完整 URL。");
+  }
+
+  if (/\s/u.test(input)) {
+    throw new Error("网站地址不能包含空白字符。");
+  }
+
+  const hasScheme = /^[a-z][a-z\d+.-]*:\/\//iu.test(input);
+  let url: URL;
+  try {
+    url = new URL(hasScheme ? input : `https://${input}`);
+  } catch {
+    throw new Error("网站地址格式无效，请输入 example.com 或完整的 http/https URL。");
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("网站地址只支持 http 或 https。");
+  }
+
+  const hostname = normalizeComparableHostname(url.hostname);
+  if (!hostname) {
+    throw new Error("网站地址缺少有效域名。");
+  }
+
+  if (isIpHostname(hostname)) {
+    throw new Error("IP 地址请使用高级规则中的 IP-CIDR 或 IP-CIDR6。");
+  }
+
+  const labels = hostname.split(".");
+  const valid = labels.every(
+    (label) =>
+      label.length > 0 &&
+      label.length <= 63 &&
+      /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u.test(label),
+  );
+  if (!valid || hostname.length > 253) {
+    throw new Error("网站域名格式无效。");
+  }
+
+  return hostname;
+}
+
+function normalizeComparableHostname(hostname: string): string {
+  return hostname.trim().toLowerCase().replace(/\.$/u, "");
+}
+
+function isIpHostname(hostname: string): boolean {
+  if (hostname.includes(":")) return true;
+  const parts = hostname.split(".");
+  return parts.length === 4 && parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) <= 255);
 }
 
 function writeRules(config: Record<string, unknown>, rules: string[]): RuleEditResult {

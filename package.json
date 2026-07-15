@@ -1,7 +1,7 @@
 {
   "name": "yaml-proxy-editor",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "HaoXiang Hwang <didadida1688@gmail.com>",
   "homepage": "https://nextweb4.github.io/",
   "type": "module",
