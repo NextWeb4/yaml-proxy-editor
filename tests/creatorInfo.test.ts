@@ -63,4 +63,12 @@ describe("creator information lock", () => {
     expect(agents).toContain("Codex");
     expect(agents).toContain("Claude Code");
   });
+
+  it("keeps the app language toggle persisted locally", () => {
+    const appSource = readFileSync(resolve("src/App.tsx"), "utf8");
+
+    expect(appSource).toContain("LANGUAGE_STORAGE_KEY");
+    expect(appSource).toContain("localStorage.setItem");
+    expect(appSource).toContain("language-control");
+  });
 });

@@ -22,7 +22,7 @@ npm run tauri:build
 最近一次本地验证：
 
 ```text
-npm run test: 26 个测试文件 / 149 个测试通过
+npm run test: 26 个测试文件 / 150 个测试通过
 npm run test -- tests/ruleEditor.test.ts: 1 个测试文件 / 20 个测试通过
 npm run test -- tests/batchSubscription.test.ts tests/configOptimizer.test.ts tests/subscriptionExport.test.ts tests/subscriptionParser.test.ts tests/nodeManager.test.ts: 5 个测试文件 / 30 个测试通过
 npm run test -- tests/providerCheck.test.ts: 1 个测试文件 / 11 个测试通过

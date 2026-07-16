@@ -1,19 +1,19 @@
 # AGENTS.md
 
 ## 1. 项目结构
-- 项目根目录：`D:\Codex\yaml`。
-- 前端入口在 `src/main.tsx`，主工作台在 `src/App.tsx`，Monaco 编辑器组件在 `src/components/editor/YamlEditor.tsx`。
-- 业务逻辑放在 `src/services/`：YAML 解析在 `src/services/yaml/`，Clash 结构识别在 `src/services/clash/`，订阅解析/刷新在 `src/services/subscription/`，节点/规则/DNS/OpenClash/配置优化分别在对应子目录。
-- Tauri 后端在 `src-tauri/`，命令入口在 `src-tauri/src/commands/`，Rust 核心逻辑在 `src-tauri/src/core/`。
-- 文档在 `docs/`，样例 YAML 在 `examples/`，测试在 `tests/`，Playwright/人工验证截图在 `artifacts/`。
+- 根目录是 `yaml-proxy-editor`。
+- 前端主入口在 `src/main.tsx`，主工作台在 `src/App.tsx`。
+- 创作者信息固定在 `src/app/creatorInfo.ts`，UI 侧栏创作者卡片也读取这里的数据。
+- 业务逻辑放在 `src/services/`，按 `yaml`、`subscription`、`nodes`、`rules`、`config`、`provider_check`、`openclash`、`desktop`、`editor` 分层。
+- Tauri 后端在 `src-tauri/`，打包配置在 `src-tauri/tauri.conf.json`。
+- 文档在 `docs/`，测试在 `tests/`，构建产物在 `dist/` 和 `src-tauri/target/`。
 
 ## 2. 运行命令
-- 安装依赖：`npm install`。
-- 前端开发服务：`npm run dev`，默认 `http://127.0.0.1:1420`。
-- Tauri 开发模式：`npm run tauri:dev`。
-- 当前项目使用 npm；未发现 pnpm/yarn 配置。
-- 当前本机已发现 Rust/Cargo 和 Windows 打包产物；如新 shell 找不到 MSVC 链接器，优先用 `cmd /c ""C:\Program1\VC\Auxiliary\Build\vcvars64.bat" && cargo test"` 这类命令加载编译环境。
-- 不要在同一条 `cmd /c` 里用 `set PATH=%USERPROFILE%\.cargo\bin;%PATH%` 覆盖 `vcvars64.bat` 刚写入的 PATH，否则可能重新丢失 `link.exe`。
+- 安装依赖：`npm install`
+- 前端开发：`npm run dev`
+- Tauri 开发：`npm run tauri:dev`
+- 当前项目使用 npm；未发现 pnpm / yarn 配置。
+- Windows 下若缺少 `link.exe`，先运行 `C:\Program1\VC\Auxiliary\Build\vcvars64.bat` 再执行 Tauri 或 Rust 命令。
 
 ## 3. 测试命令
 - 单元测试：`npm run test`。
@@ -21,19 +21,22 @@
 - Rust 后端测试：`cmd /c ""C:\Program1\VC\Auxiliary\Build\vcvars64.bat" && cargo test"`，工作目录为 `src-tauri`。
 - 修改 `src/services/` 下 YAML、Clash、订阅、节点、规则、DNS、OpenClash、配置优化、备份或合并逻辑后，必须新增或更新 `tests/`。
 - 修改单网站分流或规则页交互后，必须运行 `npm run test -- tests/ruleEditor.test.ts`，并运行 `artifacts/verify_website_rule_ui.py` 验证桌面与窄屏布局。
+- 修改 `src/App.tsx`、创作者信息或语言切换逻辑后，必须补充或更新 `tests/creatorInfo.test.ts`。
 - 修改 `src-tauri/src/commands/` 或 `src-tauri/src/core/` 后，必须运行 `cargo fmt` 和上述 Rust 后端测试；当前本机已安装 `rustfmt`。
 - 当前未发现单独的 lint / format 命令；如新增，必须写入 `package.json` 和本文档。
 
 ## 4. 构建命令
-- 前端构建：`npm run build`。
-- Windows EXE / NSIS / MSI 构建：`npm run tauri:build`。
-- Tauri 打包依赖 `src-tauri/icons/icon.ico` 和 `src-tauri/tauri.conf.json`。
-- 中文 MSI 必须保持 `bundle.windows.wix.language = "zh-CN"`，否则 WiX 可能因代码页无法写入中文产品名而失败。
-- 前端生产构建必须继续输出 `dist/.vite/third-party-licenses.md`；修改 `vite.config.ts` 后必须确认该许可证清单仍生成。
+- 前端构建：`npm run build`
+- Windows 安装包构建：`npm run tauri:build`
+- Tauri 构建依赖 `src-tauri/icons/icon.ico` 和 `src-tauri/tauri.conf.json`。
+- Windows 打包前要先加载 MSVC 环境，否则容易缺少 `link.exe`。
 
 ## 5. 代码风格
-- 前端使用 TypeScript + React；新增业务逻辑优先写成 `src/services/` 下的纯函数，并配套 Vitest。
-- UI 组件只组合状态和服务结果，不直接写 YAML 解析、订阅下载、规则修正、DNS 防泄露或文件写入逻辑。
+- 前端使用 TypeScript + React。
+- 业务逻辑优先放进 `src/services/`，UI 组件只负责组合状态和呈现。
+- 固定创作者信息是 `HaoXiang Hwang`、`https://nextweb4.github.io/`、`didadida1688@gmail.com`。
+- 创作者信息只允许从 `src/app/creatorInfo.ts` 读取；`README.md`、`package.json`、`src-tauri/Cargo.toml`、`src-tauri/tauri.conf.json`、测试和 workflow 必须同步。
+- UI 语言切换状态使用 `localStorage`，当前键名是 `yaml-proxy-editor.language`。
 - 新增图标按钮优先使用 `lucide-react`。
 - 单网站地址解析、hostname 规范化、重复规则替换和插入优先级必须放在 `src/services/rules/ruleEditor.ts`；`RulesPage` 只收集表单值并展示预览/结果。
 - 创作者信息必须从 `src/app/creatorInfo.ts` 读取；署名、个人网页、邮箱为固定项目，不得在页面组件中另写一份可漂移的副本。
@@ -76,10 +79,12 @@
 ## 8. 完成标准
 - 涉及 YAML 改写的功能必须可通过 `npx tsc -b` 和对应 Vitest 验证。
 - 单网站分流完成标准包括：完整 URL/裸域名规范化、精确/子域名匹配、策略分组选择、顶部/普通优先级、同站点目标更新、非法输入保护、`MATCH` 兜底顺序和 UI 窄屏无重叠。
+- 修改 UI、创作者信息或语言切换后，必须确认 `src/app/creatorInfo.ts`、README、package/Rust 元数据、安装包 publisher、测试和 workflow 保持一致，并验证语言选择能写入 `localStorage`。
 - 涉及保存文件的行为必须继续走保存前校验和备份链路。
 - 涉及网络的行为必须由用户点击触发，并在 UI/日志中使用脱敏 URL。
 - 发布前不能只验证前端构建；需要验证 `npm run build`，发布任务还需要验证 `npm run tauri:build` 产物。
 - `npm audit --audit-level=low` 如出现漏洞，必须先记录影响范围和冲突，再决定升级、降级、替换或隔离。
+- 当前未发现 LICENSE 文件，README 必须明确提示复用或分发前确认授权范围。
 
 ## 9. Review 标准
 - 优先检查网络边界、订阅 URL 脱敏、DNS/fake-ip/IP 防泄露规则、OpenClash provider 兼容性、规则顺序和 MATCH 兜底。
@@ -95,6 +100,7 @@
 - 修改节点页后，必须检查只有 `proxy-providers` 和少量本地 `direct/reject` 的 YAML 能展示订阅源列表。
 - 修改 `src/services/yaml/yamlService.ts` 后，必须检查普通 Clash YAML、重复 key YAML、错误缩进 YAML 的格式识别和配置清单。
 - 修改单网站分流后，必须检查 URL path/query/凭据不会进入规则，IPv4/IPv6 输入会提示使用高级 IP 规则，重复站点不会产生互相冲突的规则，且现有规则表、批量导入、模板和注释功能不回归。
+- 修改应用外壳后，必须检查中英文导航和工具栏、`yaml-proxy-editor.language` 持久化、创作者信息同步以及 1000px/移动断点无重叠。
 - 页面组件不得直接承担订阅下载、测速、文件写入或 YAML 结构改写职责。
 - 修改 `vite.config.ts` 的分块、module preload 或 HTML 生成逻辑后，必须检查 `dist/index.html` 不包含 `vendor-monaco-editor` / `vendor-monaco-yaml` / `YamlEditor` 的首屏 preload 或 stylesheet link。
 - 修改编辑器页加载逻辑后，必须检查默认渲染路径不会出现 `<YamlEditor>`，运行 `tests/monacoLazyLoad.test.ts`，并用 `artifacts/verify_editor_lazy_load.py` 做默认 textarea / 手动启用 Monaco 的 Playwright 验证。
@@ -108,3 +114,6 @@
 - Vite 大 chunk warning 当前主要来自懒加载的 Monaco 编辑器和 YAML worker；不要通过单纯提高 `chunkSizeWarningLimit` 掩盖，先确认首屏入口和 HTML preload 边界。
 - 订阅和测速功能容易突破离线边界，新增请求必须集中在允许联网模块内。
 - Clash/Mihomo 规则按顺序命中；单网站规则若错误追加在宽泛 GEOSITE/GEOIP 后可能不生效，因此默认优先插入顶部并必须有顺序测试。
+- UI 语言切换若未写入 `localStorage` 键 `yaml-proxy-editor.language`，刷新后会丢失用户选择。
+- README、package 元数据、Rust 元数据、安装包 publisher、测试和 workflow 容易出现创作者信息漂移，发布前必须同步检查。
+- 当前仓库没有 LICENSE 文件；README 必须明确说明，复用或分发前需要确认授权来源。

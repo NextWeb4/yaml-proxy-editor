@@ -122,20 +122,140 @@ import type {
 } from "./types/domain";
 
 const NAV_ITEMS = [
-  ["editor", "YAML 编辑器", FileCode2],
-  ["subscriptions", "订阅管理", Globe2],
-  ["nodes", "节点管理", Network],
-  ["rules", "分流规则", ListChecks],
-  ["dns", "DNS 审计", ShieldAlert],
-  ["openclash", "OpenClash", SearchCheck],
+  ["editor", FileCode2],
+  ["subscriptions", Globe2],
+  ["nodes", Network],
+  ["rules", ListChecks],
+  ["dns", ShieldAlert],
+  ["openclash", SearchCheck],
 ] as const;
 
 const YAML_TEMPLATES = listYamlTemplates();
 
 type PageId = (typeof NAV_ITEMS)[number][0];
+type UiLanguage = "zh" | "en";
 type SubscriptionRemoteState = "idle" | "testing" | "refreshing" | "success" | "error";
 
 const INITIAL_DOCUMENT_TAB_ID = "tab-initial";
+const LANGUAGE_STORAGE_KEY = "yaml-proxy-editor.language";
+
+const UI_COPY: Record<
+  UiLanguage,
+  {
+    builtinSample: string;
+    closeTab: string;
+    creatorAria: string;
+    creatorTitle: string;
+    currentYaml: string;
+    dropOpen: string;
+    duplicateKey: string;
+    emailTitle: (email: string) => string;
+    formatAction: string;
+    formatTitle: string;
+    languageButton: string;
+    languageLabel: string;
+    languageSwitchTitle: string;
+    mainNav: string;
+    nav: Record<PageId, string>;
+    newAction: string;
+    newTitle: string;
+    openAction: string;
+    openSection: (label: string) => string;
+    openTitle: string;
+    rootType: string;
+    saveAction: string;
+    saveAsAction: string;
+    saveAsTitle: string;
+    saveTitle: string;
+    templateTitle: string;
+    topLevelFields: string;
+    websiteTitle: string;
+  }
+> = {
+  zh: {
+    builtinSample: "内置样例",
+    closeTab: "关闭标签",
+    creatorAria: "创作者信息",
+    creatorTitle: "创作者",
+    currentYaml: "当前 YAML",
+    dropOpen: "释放以打开 YAML",
+    duplicateKey: "重复 key",
+    emailTitle: (email) => `发送邮件给 ${email}`,
+    formatAction: "格式化",
+    formatTitle: "格式化 YAML",
+    languageButton: "EN",
+    languageLabel: "语言",
+    languageSwitchTitle: "Switch to English",
+    mainNav: "主导航",
+    nav: {
+      editor: "YAML 编辑器",
+      subscriptions: "订阅管理",
+      nodes: "节点管理",
+      rules: "分流规则",
+      dns: "DNS 审计",
+      openclash: "OpenClash",
+    },
+    newAction: "新建",
+    newTitle: "新建 YAML 配置",
+    openAction: "打开",
+    openSection: (label) => `打开${label}`,
+    openTitle: "打开 YAML",
+    rootType: "根类型",
+    saveAction: "保存",
+    saveAsAction: "另存",
+    saveAsTitle: "另存为 YAML",
+    saveTitle: "保存 YAML",
+    templateTitle: "选择新建配置模板",
+    topLevelFields: "顶层字段",
+    websiteTitle: "打开个人网页",
+  },
+  en: {
+    builtinSample: "Built-in sample",
+    closeTab: "Close tab",
+    creatorAria: "Creator information",
+    creatorTitle: "Creator",
+    currentYaml: "Current YAML",
+    dropOpen: "Release to open YAML",
+    duplicateKey: "Duplicate keys",
+    emailTitle: (email) => `Send email to ${email}`,
+    formatAction: "Format",
+    formatTitle: "Format YAML",
+    languageButton: "中文",
+    languageLabel: "Language",
+    languageSwitchTitle: "切换到中文",
+    mainNav: "Main navigation",
+    nav: {
+      editor: "YAML Editor",
+      subscriptions: "Subscriptions",
+      nodes: "Nodes",
+      rules: "Rules",
+      dns: "DNS Audit",
+      openclash: "OpenClash",
+    },
+    newAction: "New",
+    newTitle: "Create YAML configuration",
+    openAction: "Open",
+    openSection: (label) => `Open ${label}`,
+    openTitle: "Open YAML",
+    rootType: "Root type",
+    saveAction: "Save",
+    saveAsAction: "Save As",
+    saveAsTitle: "Save YAML as",
+    saveTitle: "Save YAML",
+    templateTitle: "Choose a new configuration template",
+    topLevelFields: "Top-level fields",
+    websiteTitle: "Open personal website",
+  },
+};
+
+function getInitialLanguage(): UiLanguage {
+  try {
+    const saved = globalThis.localStorage?.getItem(LANGUAGE_STORAGE_KEY);
+    return saved === "en" ? "en" : "zh";
+  } catch {
+    return "zh";
+  }
+}
 
 function actionFinding(id: string, severity: Finding["severity"], title: string, message: string, path: string): Finding {
   return {
@@ -155,6 +275,7 @@ const YamlEditor = lazy(() =>
 
 export default function App() {
   const [activePage, setActivePage] = useState<PageId>("editor");
+  const [language, setLanguageState] = useState<UiLanguage>(getInitialLanguage);
   const [documentTabs, setDocumentTabs] = useState<DocumentTab[]>(() => [
     createDocumentTab(
       {
@@ -191,6 +312,7 @@ export default function App() {
   const documentTabCounterRef = useRef(1);
   const dragDepthRef = useRef(0);
   const selectedProviderNameRef = useRef<string | undefined>(undefined);
+  const copy = UI_COPY[language];
 
   const documentState = useMemo(
     () => getActiveDocumentTab(documentTabs, activeDocumentId) ?? documentTabs[0]!,
@@ -874,6 +996,16 @@ export default function App() {
     setLogs((current) => [`${new Date().toLocaleTimeString()} ${message}`, ...current].slice(0, 8));
   }
 
+  function switchLanguage() {
+    const nextLanguage: UiLanguage = language === "zh" ? "en" : "zh";
+    setLanguageState(nextLanguage);
+    try {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    } catch {
+      // localStorage can be unavailable in hardened WebView settings.
+    }
+  }
+
   return (
     <main
       className={isDropActive ? "app-shell drop-active" : "app-shell"}
@@ -888,7 +1020,7 @@ export default function App() {
         <div className="drop-overlay" aria-hidden="true">
           <div>
             <Upload size={22} />
-            <strong>释放以打开 YAML</strong>
+            <strong>{copy.dropOpen}</strong>
             <span>.yaml / .yml</span>
           </div>
         </div>
@@ -903,26 +1035,36 @@ export default function App() {
             <span>OpenClash Workbench</span>
           </div>
         </div>
-        <nav className="nav-list" aria-label="主导航">
-          {NAV_ITEMS.map(([id, label, Icon]) => (
-            <button
-              className={activePage === id ? "nav-item active" : "nav-item"}
-              key={id}
-              type="button"
-              onClick={() => setActivePage(id)}
-              title={label}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-            </button>
-          ))}
+        <div className="language-control" aria-label={copy.languageLabel}>
+          <span>{copy.languageLabel}</span>
+          <button type="button" onClick={switchLanguage} title={copy.languageSwitchTitle}>
+            {copy.languageButton}
+          </button>
+        </div>
+        <nav className="nav-list" aria-label={copy.mainNav}>
+          {NAV_ITEMS.map(([id, Icon]) => {
+            const label = copy.nav[id];
+            return (
+              <button
+                className={activePage === id ? "nav-item active" : "nav-item"}
+                key={id}
+                type="button"
+                onClick={() => setActivePage(id)}
+                title={label}
+              >
+                <Icon size={17} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </nav>
         <SidebarYamlIndex
+          copy={copy}
           formatSummary={analysis.formatSummary}
           structure={analysis.clash.structure}
           onNavigate={setActivePage}
         />
-        <CreatorSignature />
+        <CreatorSignature copy={copy} />
       </aside>
 
       <section className="workspace">
@@ -931,7 +1073,7 @@ export default function App() {
             <span className={documentState.dirty ? "status-dot dirty" : "status-dot"} />
             <div>
               <strong>{documentState.name}</strong>
-              <span>{documentState.path ?? "内置样例"}</span>
+              <span>{documentState.path ?? copy.builtinSample}</span>
             </div>
           </div>
           <div className="toolbar">
@@ -939,8 +1081,8 @@ export default function App() {
               className="template-select"
               value={selectedTemplateId}
               onChange={(event) => setSelectedTemplateId(event.target.value as YamlTemplateId)}
-              title="选择新建配置模板"
-              aria-label="选择新建配置模板"
+              title={copy.templateTitle}
+              aria-label={copy.templateTitle}
             >
               {YAML_TEMPLATES.map((template) => (
                 <option key={template.id} value={template.id}>
@@ -948,25 +1090,25 @@ export default function App() {
                 </option>
               ))}
             </select>
-            <button type="button" title="新建 YAML 配置" onClick={createNewDocument}>
+            <button type="button" title={copy.newTitle} onClick={createNewDocument}>
               <Plus size={16} />
-              <span>新建</span>
+              <span>{copy.newAction}</span>
             </button>
-            <button type="button" title="打开 YAML" onClick={openDocument}>
+            <button type="button" title={copy.openTitle} onClick={openDocument}>
               <FolderOpen size={16} />
-              <span>打开</span>
+              <span>{copy.openAction}</span>
             </button>
-            <button type="button" title="保存 YAML" onClick={() => saveDocument(false)}>
+            <button type="button" title={copy.saveTitle} onClick={() => saveDocument(false)}>
               <Save size={16} />
-              <span>保存</span>
+              <span>{copy.saveAction}</span>
             </button>
-            <button type="button" title="另存为 YAML" onClick={() => saveDocument(true)}>
+            <button type="button" title={copy.saveAsTitle} onClick={() => saveDocument(true)}>
               <Upload size={16} />
-              <span>另存</span>
+              <span>{copy.saveAsAction}</span>
             </button>
-            <button type="button" title="格式化 YAML" onClick={formatDocument}>
+            <button type="button" title={copy.formatTitle} onClick={formatDocument}>
               <RefreshCcw size={16} />
-              <span>格式化</span>
+              <span>{copy.formatAction}</span>
             </button>
           </div>
         </header>
@@ -974,6 +1116,7 @@ export default function App() {
         <DocumentTabStrip
           tabs={documentTabs}
           activeId={activeDocumentId}
+          closeLabel={copy.closeTab}
           onSelect={setActiveDocumentId}
           onClose={closeDocumentById}
         />
@@ -1077,11 +1220,13 @@ export default function App() {
 function DocumentTabStrip({
   tabs,
   activeId,
+  closeLabel,
   onSelect,
   onClose,
 }: {
   tabs: DocumentTab[];
   activeId: string;
+  closeLabel: string;
   onSelect: (id: string) => void;
   onClose: (id: string) => void;
 }) {
@@ -1102,12 +1247,12 @@ function DocumentTabStrip({
               <span className={tab.dirty ? "status-dot dirty" : "status-dot"} />
               <strong>{tab.name}</strong>
             </button>
-            <button
+              <button
               type="button"
               className="document-tab-close"
               disabled={tabs.length <= 1}
-              title="关闭标签"
-              aria-label={`关闭 ${tab.name}`}
+              title={closeLabel}
+              aria-label={`${closeLabel} ${tab.name}`}
               onClick={() => onClose(tab.id)}
             >
               <X size={13} />
@@ -1130,30 +1275,32 @@ const SIDEBAR_SECTION_TARGETS: Record<string, PageId> = {
 };
 
 function SidebarYamlIndex({
+  copy,
   formatSummary,
   structure,
   onNavigate,
 }: {
+  copy: (typeof UI_COPY)[UiLanguage];
   formatSummary: YamlFormatSummary;
   structure: Array<{ id: string; label: string; count?: number; path: string }>;
   onNavigate: (page: PageId) => void;
 }) {
   return (
-    <section className="sidebar-yaml-index" aria-label="当前 YAML 内容">
+    <section className="sidebar-yaml-index" aria-label={copy.currentYaml}>
       <header>
-        <span>当前 YAML</span>
+        <span>{copy.currentYaml}</span>
         <strong>{formatSummary.dialect}</strong>
       </header>
       <div className="sidebar-format-card">
-        <span>根类型：{formatRootKindLabel(formatSummary.rootKind)}</span>
-        <span>顶层字段：{formatSummary.topLevelKeys.length}</span>
-        {formatSummary.duplicateKeyCount > 0 && <em>重复 key：{formatSummary.duplicateKeyCount}</em>}
+        <span>{copy.rootType}: {formatRootKindLabel(formatSummary.rootKind)}</span>
+        <span>{copy.topLevelFields}: {formatSummary.topLevelKeys.length}</span>
+        {formatSummary.duplicateKeyCount > 0 && <em>{copy.duplicateKey}: {formatSummary.duplicateKeyCount}</em>}
       </div>
       <div className="sidebar-structure-list" aria-label="结构统计">
         {structure.map((node) => {
           const target = SIDEBAR_SECTION_TARGETS[node.id] ?? "editor";
           return (
-            <button type="button" key={node.id} onClick={() => onNavigate(target)} title={`打开${node.label}`}>
+            <button type="button" key={node.id} onClick={() => onNavigate(target)} title={copy.openSection(node.label)}>
               <b>{node.label}</b>
               <strong>{node.count ?? 0}</strong>
             </button>
@@ -1164,19 +1311,19 @@ function SidebarYamlIndex({
   );
 }
 
-function CreatorSignature() {
+function CreatorSignature({ copy }: { copy: (typeof UI_COPY)[UiLanguage] }) {
   return (
-    <section className="creator-signature" aria-label="创作者信息">
+    <section className="creator-signature" aria-label={copy.creatorAria}>
       <header>
         <UserRound size={15} />
-        <span>创作者</span>
+        <span>{copy.creatorTitle}</span>
       </header>
       <strong>{CREATOR_INFO.name}</strong>
-      <a href={CREATOR_INFO.website} target="_blank" rel="noreferrer" title="打开个人网页">
+      <a href={CREATOR_INFO.website} target="_blank" rel="noreferrer" title={copy.websiteTitle}>
         <ExternalLink size={14} />
         <span>{CREATOR_INFO.website}</span>
       </a>
-      <a href={`mailto:${CREATOR_INFO.email}`} title={`发送邮件给 ${CREATOR_INFO.email}`}>
+      <a href={`mailto:${CREATOR_INFO.email}`} title={copy.emailTitle(CREATOR_INFO.email)}>
         <Mail size={14} />
         <span>{CREATOR_INFO.email}</span>
       </a>

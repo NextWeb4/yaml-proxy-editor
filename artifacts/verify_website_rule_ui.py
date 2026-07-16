@@ -81,5 +81,12 @@ with sync_playwright() as p:
     )
     page.screenshot(path=str(ROOT / "website-rule-narrow.png"), full_page=True)
 
+    page.locator(".language-control button").click()
+    expect(page.locator(".nav-item", has_text="Rules")).to_be_visible()
+    page.reload()
+    page.wait_for_load_state("networkidle")
+    expect(page.locator(".nav-item", has_text="Rules")).to_be_visible()
+    expect(page.locator(".language-control button")).to_have_text("中文")
+
     browser.close()
     assert not console_errors, "\n".join(console_errors)
