@@ -22,9 +22,11 @@
 - Tauri builds require `src-tauri/icons/`, `src-tauri/tauri.conf.json`, Rust, and the Windows MSVC linker.
 
 ## 5. Code style
+- Keep the centered Shields language selector in all three root READMEs with the exact visible labels `English`, `简体中文`, and `日本語`, linked in that order to `README.md`, `README.zh-CN.md`, and `README.ja.md`; do not replace the SVG labels with browser-translatable text.
+- Keep the three README versions aligned in section order, facts, commands, paths, links, images, numbers, and code fences; translate headings and prose naturally while preserving identifiers.
 - Use TypeScript and React patterns already present; keep algorithms out of `src/App.tsx` and in focused service modules.
 - Use `lucide-react` for interface icons and preserve lazy loading for `YamlEditor`/Monaco workers.
-- Creator metadata is the fixed value `HaoXiang Hwang`, `didadida1688@gmail.com`, and `https://nextweb4.github.io/`; keep `src/app/creatorInfo.ts`, README, package, Rust, installer, tests, and workflow metadata aligned.
+- Creator metadata is the fixed value `HaoXiang Hwang`, `didadida1688@gmail.com`, and `https://nextweb4.github.io/`; development assistance is credited to Codex and Claude Code. Keep `src/app/creatorInfo.ts`, README, package, Rust, installer, tests, and `.github/workflows/creator-identity-lock.yml` aligned.
 - Format Rust changes with `cargo fmt --manifest-path src-tauri/Cargo.toml`. No JavaScript/TypeScript lint or format command was found; add one before claiming JS/TS lint or formatter coverage.
 
 ## 6. Module boundaries
@@ -47,6 +49,7 @@
 - Release changes verify `npm run tauri:build` artifacts and keep creator metadata synchronized. Do not publish while `npm audit --audit-level=low` findings are unexplained.
 
 ## 9. Review criteria
+- Verify the language selector renders through GitHub without browser-translatable text and all three README versions keep the same facts, commands, links, and images.
 - Review offline/network boundaries, URL redaction, rule order/`MATCH`, DNS/fake-IP safety, provider content validation, and OpenClash compatibility first.
 - Check duplicate keys, invalid YAML, subscription naming collisions, malformed URLs, oversized provider responses, and partial failures.
 - Confirm Monaco remains absent from the initial HTML preload and loads only after explicit editor activation.

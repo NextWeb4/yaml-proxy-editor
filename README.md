@@ -1,4 +1,8 @@
-[English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/English-0969da?style=flat-square" alt="English"></a>
+  <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c8102e?style=flat-square" alt="简体中文"></a>
+  <a href="README.ja.md"><img src="https://img.shields.io/badge/%E6%97%A5%E6%9C%AC%E8%AA%9E-8250df?style=flat-square" alt="日本語"></a>
+</p>
 
 # YAML Proxy Editor
 
@@ -24,11 +28,29 @@ A local-first Windows desktop workbench for editing, auditing, importing, and ex
 - Audits rules, DNS/fake-IP settings, OpenClash compatibility, remote provider responses, and common configuration risks.
 - Switches between Chinese and English and stores the choice in local `localStorage` under `yaml-proxy-editor.language`.
 
+## Typical Workflow
+
+1. Open a local `.yaml`/`.yml` file, drop one into the workbench, or start from a Clash/Mihomo template.
+2. Review the parsed inventory and diagnostics before changing providers, nodes, groups, DNS, or rules.
+3. Make focused changes with the domain tools; use the diff preview when merging or applying broader optimizations.
+4. Trigger subscription refresh, provider checks, or speed tests only when those network-backed results are needed.
+5. Re-run validation and compatibility checks, review the generated YAML, then save locally or export the required target format.
+
+The tolerant analysis path can report useful partial structure from a damaged file, but it does not make that file safe to save. Strict validation remains the final write gate.
+
 ## Per-Site Routing
 
 When a full URL is entered, only its normalized hostname is written to YAML. The path, query, username, and password are discarded and entering a site does not itself make a network request. New website rules default to the top of `rules`; normal priority inserts them before `MATCH`. An existing rule with the same type and hostname is updated instead of duplicated.
 
 ![Per-site routing form and generated rule preview](artifacts/website-rule-desktop.png)
+
+## Requirements and Compatibility
+
+- **Desktop target:** the checked-in installers and Tauri bundle configuration target Windows x64.
+- **Frontend tooling:** use npm with the committed `package-lock.json`; no pnpm or Yarn configuration was found. The repository does not declare a minimum Node.js version.
+- **Desktop tooling:** `npm run tauri:dev` and `npm run tauri:build` require Rust plus the Windows MSVC C++ linker environment.
+- **Local development:** Vite listens only on `127.0.0.1:1420`, so the development server is not exposed to the local network by default.
+- **Configuration families:** the workbench understands Clash, Mihomo, and OpenClash structures, but exported behavior still depends on the target client and its supported schema.
 
 ## Download
 
@@ -58,11 +80,15 @@ npm run tauri:dev
 npm run test
 npm run build
 npm run tauri:build
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
 - `npm run test` runs the Vitest suite under `tests/`.
 - `npm run build` performs the TypeScript project build and creates the Vite frontend bundle.
 - `npm run tauri:build` runs the frontend build and produces the configured NSIS and MSI bundles.
+- `cargo test --manifest-path src-tauri/Cargo.toml` exercises the native crate. Rust changes should also run `cargo fmt --manifest-path src-tauri/Cargo.toml`.
+
+Use `npm run preview` to inspect a completed frontend bundle on `127.0.0.1:1420`. No JavaScript/TypeScript lint or format script is currently declared.
 
 If the Tauri build reports a missing `link.exe`, run it from a terminal where the Visual Studio C++ build environment has been loaded.
 
@@ -103,6 +129,21 @@ More detail is available in [`docs/QUICKSTART.md`](docs/QUICKSTART.md), [`docs/A
 - [https://nextweb4.github.io/](https://nextweb4.github.io/)
 
 The creator identity is a fixed project value shared by application, package, Rust, installer, test, and workflow metadata.
+
+Development assistance is credited to Codex and Claude Code. `.github/workflows/creator-identity-lock.yml` checks the fixed creator details and both assistance names in `README.md` and `AGENTS.md`.
+
+## Project Status and Limitations
+
+- This is an active, public desktop application at version 0.2.0; the repository contains matching NSIS and Chinese MSI packages.
+- The application UI supports Chinese and English; the three README languages do not imply a Japanese UI.
+- “Local-first” does not mean every feature is offline: subscription refresh, remote provider checks, and speed tests perform user-triggered requests.
+- A reachable provider may still return HTML, a login page, empty data, or invalid YAML; connectivity alone is not a successful validation result.
+- Rule order is semantic. A site rule placed after broader GEOSITE/GEOIP rules may never run even when its syntax is valid.
+- The repository currently has no project license, so reuse and redistribution remain legally uncertain.
+
+## Contributing
+
+Keep parsing and mutation in the matching `src/services/` domain, presentation in React components, and native file/network commands under `src-tauri/src/`. Preserve URL redaction, explicit network gestures, strict save validation, backup behavior, `MATCH` ordering, and Monaco lazy loading. Add a focused Vitest file for the changed service and run `npm run test` plus `npm run build`; Rust changes also require Cargo formatting and tests. Reuse the established `yaml`, `monaco-yaml`, and `json-diff-ts` libraries unless a replacement has a documented compatibility, license, security, and maintenance audit.
 
 ## License
 
