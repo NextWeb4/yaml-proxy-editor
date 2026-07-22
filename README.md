@@ -1,6 +1,3 @@
-
-
-
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/English-0969da?style=flat-square" alt="English"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c8102e?style=flat-square" alt="简体中文"></a>
@@ -101,10 +98,18 @@ If the Tauri build reports a missing `link.exe`, run it from a terminal where th
 | --- | --- |
 | `src/App.tsx` | Application shell, page state, and service composition |
 | `src/components/editor/` | Lazily loaded Monaco YAML editor |
+| `src/services/audit/` | DNS and configuration diagnostics |
+| `src/services/backup/` | Backup catalog, policy, and stable snapshots |
+| `src/services/clash/` | Clash configuration parsing and operations |
+| `src/services/diff/` | Structured diff previews |
+| `src/services/editor/` | Multi-document tab state |
+| `src/services/groups/` | Proxy-group generation |
+| `src/services/merge/` | YAML configuration merge and conflict handling |
 | `src/services/yaml/` | YAML parsing, formatting, validation, and templates |
 | `src/services/subscription/` | Subscription parsing, refresh, selection, and export |
 | `src/services/nodes/` | Node normalization, filtering, grouping, and export |
 | `src/services/rules/` | Rule parsing, editing, templates, and website rules |
+| `src/services/speedtest/` | Speed-test defaults, planning, and execution |
 | `src/services/config/` | Provider and DNS/fake-IP/TUN hardening changes |
 | `src/services/openclash/` | OpenClash compatibility checks and exports |
 | `src/services/provider_check/` | User-triggered remote provider checks |
@@ -142,6 +147,7 @@ Development assistance is credited to Codex and Claude Code. `.github/workflows/
 - “Local-first” does not mean every feature is offline: subscription refresh, remote provider checks, and speed tests perform user-triggered requests.
 - A reachable provider may still return HTML, a login page, empty data, or invalid YAML; connectivity alone is not a successful validation result.
 - Rule order is semantic. A site rule placed after broader GEOSITE/GEOIP rules may never run even when its syntax is valid.
+- `src-tauri/tauri.conf.json` currently sets `app.security.csp` to `null`; remote content or new runtime origins should not be added without defining and testing an explicit content security policy.
 - The repository currently has no project license, so reuse and redistribution remain legally uncertain.
 
 ## Contributing
@@ -151,3 +157,5 @@ Keep parsing and mutation in the matching `src/services/` domain, presentation i
 ## License
 
 No `LICENSE` file is currently present in the repository. Confirm the original authorization and applicable permissions before reuse or redistribution; the absence of a project license is not cured by the licenses of its dependencies.
+
+

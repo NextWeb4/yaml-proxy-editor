@@ -1,11 +1,9 @@
 
-
-
 # AGENTS.md
 
 ## 1. Project structure
 - `src/main.tsx` starts the React application and `src/App.tsx` composes the workbench.
-- Put reusable behavior in the matching `src/services/` domain (`yaml`, `subscription`, `nodes`, `rules`, `config`, `provider_check`, `openclash`, `desktop`, or `editor`). Keep UI components focused on state and presentation.
+- Put reusable behavior in the matching `src/services/` domain (`audit`, `backup`, `clash`, `config`, `desktop`, `diff`, `editor`, `groups`, `merge`, `nodes`, `openclash`, `provider_check`, `rules`, `speedtest`, `subscription`, or `yaml`). Keep UI components focused on state and presentation.
 - Native commands and guards live under `src-tauri/src/`; tests and YAML fixtures live under `tests/`. Packaging is configured by `src-tauri/tauri.conf.json`.
 
 ## 2. Run commands
@@ -40,6 +38,7 @@
 
 ## 7. Prohibited changes
 - Do not upload local YAML, nodes, URLs, logs, or backups automatically; do not add telemetry, analytics, auto-update SDKs, CDN runtime assets, or unknown-domain requests.
+- `src-tauri/tauri.conf.json` currently disables CSP with `app.security.csp: null`; do not add remote content or runtime origins without first defining and testing an explicit CSP.
 - Do not log complete subscription/provider/speed-test URLs, paths, queries, usernames, passwords, or tokens.
 - Do not replace existing `yaml`, `monaco-yaml`, or `json-diff-ts` behavior with hand-written parsers/diff engines without a documented compatibility and license audit.
 - Do not modify the fixed creator identity or duplicate it as drift-prone component literals.
@@ -64,3 +63,5 @@
 - Clash/Mihomo rules are order-sensitive; a site rule after broad GEOSITE/GEOIP rules may never match.
 - Monaco is pinned at `0.52.2`; upgrades require worker compatibility, lazy-load, build, and dependency-audit verification.
 - The repository has no project license, which blocks confident reuse or redistribution regardless of dependency licenses.
+
+

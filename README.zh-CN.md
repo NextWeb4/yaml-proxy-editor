@@ -1,6 +1,3 @@
-
-
-
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/English-0969da?style=flat-square" alt="English"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c8102e?style=flat-square" alt="简体中文"></a>
@@ -101,10 +98,18 @@ cargo test --manifest-path src-tauri/Cargo.toml
 | --- | --- |
 | `src/App.tsx` | 应用外壳、页面状态和服务组合 |
 | `src/components/editor/` | 懒加载 Monaco YAML 编辑器 |
+| `src/services/audit/` | DNS 与配置诊断 |
+| `src/services/backup/` | 备份目录、策略和稳定快照 |
+| `src/services/clash/` | Clash 配置解析与操作 |
+| `src/services/diff/` | 结构化差异预览 |
+| `src/services/editor/` | 多文档标签页状态 |
+| `src/services/groups/` | 代理组生成 |
+| `src/services/merge/` | YAML 配置合并与冲突处理 |
 | `src/services/yaml/` | YAML 解析、格式化、校验和模板 |
 | `src/services/subscription/` | 订阅解析、刷新、选择和导出 |
 | `src/services/nodes/` | 节点规范化、筛选、分组和导出 |
 | `src/services/rules/` | 规则解析、编辑、模板和网站分流 |
+| `src/services/speedtest/` | 测速默认值、规划和执行 |
 | `src/services/config/` | provider 与 DNS/fake-IP/TUN 优化 |
 | `src/services/openclash/` | OpenClash 兼容检查和导出 |
 | `src/services/provider_check/` | 用户主动触发的远程 provider 检查 |
@@ -142,6 +147,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 - “本地优先”不表示所有功能均离线：刷新订阅、远程 provider 检查和测速会执行由用户主动触发的请求。
 - provider 可以访问并不代表内容有效；返回 HTML、登录页、空内容或无效 YAML 都不能视为校验成功。
 - 规则顺序具有语义；网站规则即使语法正确，放在更宽泛的 GEOSITE/GEOIP 规则之后也可能永远不会命中。
+- `src-tauri/tauri.conf.json` 当前把 `app.security.csp` 设为 `null`；在定义并测试明确的内容安全策略前，不应新增远程内容或运行时来源。
 - 仓库当前没有项目许可证，因此复用与重新分发仍存在法律不确定性。
 
 ## 参与贡献
@@ -151,3 +157,5 @@ cargo test --manifest-path src-tauri/Cargo.toml
 ## 许可证
 
 当前仓库没有 `LICENSE` 文件。复用或分发前必须确认原始授权来源和适用范围；依赖项各自拥有许可证，并不能替代项目本身的授权。
+
+

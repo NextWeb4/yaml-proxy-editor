@@ -1,6 +1,3 @@
-
-
-
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/English-0969da?style=flat-square" alt="English"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c8102e?style=flat-square" alt="简体中文"></a>
@@ -101,10 +98,18 @@ Tauri ビルドで `link.exe` が見つからない場合は、Visual Studio C++
 | --- | --- |
 | `src/App.tsx` | アプリシェル、ページ状態、サービスの組み合わせ |
 | `src/components/editor/` | 遅延ロードする Monaco YAML エディター |
+| `src/services/audit/` | DNS と設定の診断 |
+| `src/services/backup/` | バックアップ一覧、ポリシー、安定スナップショット |
+| `src/services/clash/` | Clash 設定の解析と操作 |
+| `src/services/diff/` | 構造化された差分プレビュー |
+| `src/services/editor/` | 複数文書のタブ状態 |
+| `src/services/groups/` | プロキシグループの生成 |
+| `src/services/merge/` | YAML 設定のマージと競合処理 |
 | `src/services/yaml/` | YAML 解析、整形、検証、テンプレート |
 | `src/services/subscription/` | 購読の解析、更新、選択、出力 |
 | `src/services/nodes/` | ノードの正規化、絞り込み、グループ化、出力 |
 | `src/services/rules/` | ルール解析、編集、テンプレート、サイトルール |
+| `src/services/speedtest/` | 速度テストの既定値、計画、実行 |
 | `src/services/config/` | プロバイダーと DNS/fake-IP/TUN の最適化 |
 | `src/services/openclash/` | OpenClash 互換性と出力 |
 | `src/services/provider_check/` | ユーザー起動のリモートプロバイダー検査 |
@@ -142,6 +147,7 @@ Tauri ビルドで `link.exe` が見つからない場合は、Visual Studio C++
 - 「ローカルファースト」は全機能がオフラインという意味ではありません。購読更新、リモートプロバイダー検査、速度テストは利用者の操作で通信します。
 - プロバイダーに到達できても、HTML、ログインページ、空データ、無効な YAML が返る場合があります。接続できただけでは検証成功になりません。
 - ルールの順序には意味があります。サイトルールをより広い GEOSITE/GEOIP ルールの後に置くと、構文が正しくても一致しない場合があります。
+- `src-tauri/tauri.conf.json` では現在 `app.security.csp` が `null` です。明示的なコンテンツセキュリティポリシーを定義して検証するまでは、リモートコンテンツや新しい実行時オリジンを追加しないでください。
 - 現在プロジェクトライセンスがないため、再利用と再配布の法的条件は不明確です。
 
 ## コントリビューション
@@ -151,3 +157,5 @@ Tauri ビルドで `link.exe` が見つからない場合は、Visual Studio C++
 ## ライセンス
 
 現在、リポジトリに `LICENSE` はありません。再利用または再配布前に、元の許可と適用範囲を確認してください。依存関係のライセンスは、プロジェクト自体の許諾を代替しません。
+
+
