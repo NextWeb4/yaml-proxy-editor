@@ -1,3 +1,6 @@
+
+
+
 <p align="center">
   <a href="README.md"><img src="https://img.shields.io/badge/English-0969da?style=flat-square" alt="English"></a>
   <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-c8102e?style=flat-square" alt="简体中文"></a>
@@ -125,7 +128,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 ## 创作者
 
 - HaoXiang Hwang
-- [didadida1688@gmail.com](mailto:didadida1688@gmail.com)
+- [Rays688888@Gmail.com](mailto:Rays688888@Gmail.com)
 - [https://nextweb4.github.io/](https://nextweb4.github.io/)
 
 创作者身份是固定项目值，应用、package、Rust、安装包、测试和 workflow 元数据必须保持一致。

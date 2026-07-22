@@ -1,3 +1,6 @@
+
+
+
 # AGENTS.md
 
 ## 1. Project structure
@@ -26,7 +29,7 @@
 - Keep the three README versions aligned in section order, facts, commands, paths, links, images, numbers, and code fences; translate headings and prose naturally while preserving identifiers.
 - Use TypeScript and React patterns already present; keep algorithms out of `src/App.tsx` and in focused service modules.
 - Use `lucide-react` for interface icons and preserve lazy loading for `YamlEditor`/Monaco workers.
-- Creator metadata is the fixed value `HaoXiang Hwang`, `didadida1688@gmail.com`, and `https://nextweb4.github.io/`; development assistance is credited to Codex and Claude Code. Keep `src/app/creatorInfo.ts`, README, package, Rust, installer, tests, and `.github/workflows/creator-identity-lock.yml` aligned.
+- Creator metadata is the fixed value `HaoXiang Hwang`, `Rays688888@Gmail.com`, and `https://nextweb4.github.io/`; development assistance is credited to Codex and Claude Code. Keep `src/app/creatorInfo.ts`, README, package, Rust, installer, tests, and `.github/workflows/creator-identity-lock.yml` aligned.
 - Format Rust changes with `cargo fmt --manifest-path src-tauri/Cargo.toml`. No JavaScript/TypeScript lint or format command was found; add one before claiming JS/TS lint or formatter coverage.
 
 ## 6. Module boundaries

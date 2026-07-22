@@ -1,3 +1,6 @@
+
+
+
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -6,7 +9,7 @@ import { CREATOR_INFO } from "../src/app/creatorInfo";
 const EXPECTED_CREATOR = {
   name: "HaoXiang Hwang",
   website: "https://nextweb4.github.io/",
-  email: "didadida1688@gmail.com",
+  email: "Rays688888@Gmail.com",
 } as const;
 
 describe("creator information lock", () => {

@@ -1,3 +1,4 @@
+
 name: Creator Identity Lock
 
 on:
@@ -16,7 +17,7 @@ jobs:
 
           expected_name="HaoXiang Hwang"
           expected_website="https://nextweb4.github.io/"
-          expected_email="didadida1688@gmail.com"
+          expected_email="Rays688888@Gmail.com"
 
           files=(
             "src/app/creatorInfo.ts"
